@@ -6,7 +6,7 @@ import (
 )
 
 func GetUser(w http.ResponseWriter, r *http.Request)  {
-	w.Write([]byte("User Service Is Running"))
+	w.Write([]byte("User Api-Gateway Is Running"))
 }
 
 
