@@ -1,6 +1,5 @@
 package repository
 
-import "time"
 
 
 type User struct {
@@ -8,9 +7,7 @@ type User struct {
 	Name string `json:"name"`
 	Email string `json:"email" gorm:"unique"`
 	Password string `json:"password"`
-	Role_id uint 
-	Created_at time.Time
-	Updated_at time.Time
+	Role_id uint `json:"id_role"`
 }
 
 type Roles struct {

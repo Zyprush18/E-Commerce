@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package register;
+
+option go_package = "github.com/Zyprush18/E-Commerce";
+
+service RegisterService {
+    rpc Register (ReqRegister) returns (ResRegister);
+}
+
+message ReqRegister {
+    string Name = 1;
+    string Email = 2;
+    string Password = 3;
+}
+
+message ResRegister {
+    string message = 1;
+}
