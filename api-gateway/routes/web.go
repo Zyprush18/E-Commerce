@@ -12,6 +12,7 @@ func Routes()  {
 	auth.InitGRPCCLIENT()
 
 	http.HandleFunc("/register", auth.Register)
+	http.HandleFunc("/login",auth.Login)
 
 
 	log.Println("Api gateway running on port : 8080")

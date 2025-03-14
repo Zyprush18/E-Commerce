@@ -15,5 +15,13 @@ func HashingPassword(password string) (string, error)  {
 	}
 
 	return string(hashing),nil
+}
 
+
+func DecryptPassword(hashpassword,inputpassword string) error {
+	if err := bcrypt.CompareHashAndPassword([]byte(hashpassword),[]byte(inputpassword)); err != nil {
+		return err
+	}
+
+	return nil
 }

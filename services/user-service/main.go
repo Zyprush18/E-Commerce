@@ -15,6 +15,7 @@ func main() {
 	repository.Connect()
 
 	register := &handler.Register{}
+	login := &handler.Login{}
 
 	// Buat listener untuk gRPC
 	lis, err := net.Listen("tcp", ":8081")
@@ -25,6 +26,7 @@ func main() {
 	// Jalankan server gRPC
 	s := grpc.NewServer()
 	pb.RegisterRegisterServiceServer(s, register)
+	pb.RegisterLoginServiceServer(s, login)
 
 	log.Println("User Service Running On Port 8081")
 	if err := s.Serve(lis); err != nil {

@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package login;
+
+option go_package = "github.com/Zyprush18/E-Commerce";
+
+service LoginService {
+    rpc Login (ReqLogin) returns (ResLogin);
+}
+
+
+message ReqLogin {
+    string Email = 1;
+    string Password = 2;
+}
+
+message ResLogin {
+    string message = 1;
+    repeated string data = 2;
+    string token = 3; 
+    string refresh = 4;
+}

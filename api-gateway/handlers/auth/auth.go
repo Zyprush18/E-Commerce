@@ -3,14 +3,14 @@ package auth
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"log"
+
 	// "log"
 	"net/http"
 
 	"github.com/Zyprush18/E-Commerce/common"
 	"github.com/Zyprush18/E-Commerce/services"
 	pb "github.com/Zyprush18/E-Commerce/services/user-service/proto"
-	"github.com/go-playground/validator/v10"
 )
 
 // menginisialisasi pointer dari struct yang ada di folder common
@@ -45,22 +45,12 @@ func Register(w http.ResponseWriter, r *http.Request)  {
 		return
 	}
 
-	// menginisialisasi library validator
-	validate := validator.New()
-
-	// mengecek apakah ada validasi yang error
-	if err := validate.Struct(userReq); err != nil {
-		var messagevalidate []string
-
-		// perulangan yang di lakukan untuk mendapatkan error field dan tag yang kemudian di kirim ke array string
-		for _, v := range err.(validator.ValidationErrors) {
-			messagevalidate = append(messagevalidate, fmt.Sprintf("Field %s is %s", v.Field(), v.Tag()))
-		}
-
+	// mengecek validasi
+	if err := services.Validation(userReq); err != nil {
 		w.WriteHeader(services.BadRequest)
 		json.NewEncoder(w).Encode(services.Message{
 			Message: "Validation Error",
-			Error: messagevalidate,
+			Error: err,
 		})
 		return
 	}
@@ -69,7 +59,7 @@ func Register(w http.ResponseWriter, r *http.Request)  {
 	ctx := context.Background() 
 
 	// memanggil metode register yang ada di UserService pada gRPC Server dan mengirimkan request yang berisi data pengguna. ctx (context) di gunakan untuk mengatur lifecycle request
-	userClient, err := grpcClient.UserService.Register(ctx, &pb.ReqRegister{
+	userClient, err := grpcClient.RegisterService.Register(ctx, &pb.ReqRegister{
 		Name: userReq.Name,
 		Email: userReq.Email,
 		Password: userReq.Password,
@@ -77,7 +67,7 @@ func Register(w http.ResponseWriter, r *http.Request)  {
 
 	// mengirimkan response jika terjadi error pada metode register
 	if err != nil {
-		// log.Fatal(err.Error())
+		log.Fatal(err.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(services.Message{
 			Message: "Failed Register User",
@@ -91,7 +81,61 @@ func Register(w http.ResponseWriter, r *http.Request)  {
 	json.NewEncoder(w).Encode(services.Message{
 		Message: userClient.Message,
 	})
+}
 
 
+func Login(w http.ResponseWriter, r *http.Request)  {
 
+	w.Header().Add("Content-Type", "application/json")
+	if r.Method != http.MethodPost {
+		w.WriteHeader(services.MethodNotAllowed)
+		json.NewEncoder(w).Encode(services.Message{
+			Message: "Method Not Allowed",
+		})
+	return
+	}
+
+	loginReq := services.LoginReq{}
+
+		// mengecek apakah body nya sudah sama dengan user request 
+		if err := json.NewDecoder(r.Body).Decode(&loginReq); err != nil {
+			w.WriteHeader(services.BadRequest)
+			json.NewEncoder(w).Encode(services.Message{
+				Message: "Invalid Field",
+			})
+			return
+		}
+
+	if err := services.Validation(loginReq); err != nil {
+		w.WriteHeader(services.BadRequest)
+		json.NewEncoder(w).Encode(services.Message{
+			Message: "Validation Error",
+			Error: err,
+		})
+		return
+	}
+
+
+	ctx := context.Background()
+	login,err := grpcClient.LoginService.Login(ctx,&pb.ReqLogin{
+		Email: loginReq.Email,
+		Password: loginReq.Password,
+	})
+
+	if err != nil {
+		log.Fatal(err.Error())
+		w.WriteHeader(services.InternalServerError)
+		json.NewEncoder(w).Encode(services.Message{
+			Message: "Failed Login",
+		})
+		return
+	}
+
+	w.WriteHeader(services.Success)
+	json.NewEncoder(w).Encode(services.Message{
+		Message: login.Message,
+		Data: login.Data,
+		Token: login.Token,
+		RefreshToken: login.Refresh,
+	})
 }

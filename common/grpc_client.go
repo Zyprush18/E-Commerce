@@ -10,7 +10,9 @@ import (
 
 // menginisialisasi Register Service untuk client
 type GRPCCLIENT struct {
-	UserService pb.RegisterServiceClient
+	RegisterService pb.RegisterServiceClient
+	LoginService pb.LoginServiceClient
+
 }
 
 func NewGRPCCLIENT() *GRPCCLIENT {
@@ -24,6 +26,7 @@ func NewGRPCCLIENT() *GRPCCLIENT {
 
 	// mengembalikan instance dari gRPC Client yang dapat digunakan untuk berkomunikasi dengan gRPC Server.
 	return &GRPCCLIENT{
-		UserService: pb.NewRegisterServiceClient(conn),
+		RegisterService: pb.NewRegisterServiceClient(conn),
+		LoginService: pb.NewLoginServiceClient(conn),
 	}
 }
