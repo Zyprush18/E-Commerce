@@ -3,12 +3,12 @@ package auth
 import (
 	"context"
 	"encoding/json"
-	"log"
 
 	// "log"
 	"net/http"
 
 	"github.com/Zyprush18/E-Commerce/common"
+	"github.com/Zyprush18/E-Commerce/configs"
 	"github.com/Zyprush18/E-Commerce/services"
 	pb "github.com/Zyprush18/E-Commerce/services/user-service/proto"
 )
@@ -16,15 +16,15 @@ import (
 // menginisialisasi pointer dari struct yang ada di folder common
 var grpcClient *common.GRPCCLIENT
 
-func InitGRPCCLIENT()  {
+func InitGRPCCLIENT() {
 	grpcClient = common.NewGRPCCLIENT()
 }
 
-func Register(w http.ResponseWriter, r *http.Request)  {
+func Register(w http.ResponseWriter, r *http.Request) {
 	// set header menjadi application/json
 	w.Header().Set("Content-Type", "application/json")
 
-	// mengecek method 
+	// mengecek method
 	if r.Method != http.MethodPost {
 		w.WriteHeader(services.MethodNotAllowed)
 		json.NewEncoder(w).Encode(services.Message{
@@ -36,7 +36,7 @@ func Register(w http.ResponseWriter, r *http.Request)  {
 	// mengisialisasi struct user request
 	userReq := services.UserRequest{}
 
-	// mengecek apakah body nya sudah sama dengan user request 
+	// mengecek apakah body nya sudah sama dengan user request
 	if err := json.NewDecoder(r.Body).Decode(&userReq); err != nil {
 		w.WriteHeader(services.BadRequest)
 		json.NewEncoder(w).Encode(services.Message{
@@ -50,28 +50,26 @@ func Register(w http.ResponseWriter, r *http.Request)  {
 		w.WriteHeader(services.BadRequest)
 		json.NewEncoder(w).Encode(services.Message{
 			Message: "Validation Error",
-			Error: err,
+			Error:   err,
 		})
 		return
 	}
 
-	// membuat context kosong yang sering di gunakan untuk pemanggilan fungsi gRPC 
-	ctx := context.Background() 
+	// membuat context kosong yang sering di gunakan untuk pemanggilan fungsi gRPC
+	ctx := context.Background()
 
 	// memanggil metode register yang ada di UserService pada gRPC Server dan mengirimkan request yang berisi data pengguna. ctx (context) di gunakan untuk mengatur lifecycle request
 	userClient, err := grpcClient.RegisterService.Register(ctx, &pb.ReqRegister{
-		Name: userReq.Name,
-		Email: userReq.Email,
+		Name:     userReq.Name,
+		Email:    userReq.Email,
 		Password: userReq.Password,
 	})
 
 	// mengirimkan response jika terjadi error pada metode register
 	if err != nil {
-		log.Fatal(err.Error())
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(services.Message{
-			Message: "Failed Register User",
-			Error: err.Error(),
+			Message: "Email yang Anda masukkan sudah digunakan. Harap gunakan email lain.",
 		})
 		return
 	}
@@ -83,8 +81,7 @@ func Register(w http.ResponseWriter, r *http.Request)  {
 	})
 }
 
-
-func Login(w http.ResponseWriter, r *http.Request)  {
+func Login(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Add("Content-Type", "application/json")
 	if r.Method != http.MethodPost {
@@ -92,50 +89,50 @@ func Login(w http.ResponseWriter, r *http.Request)  {
 		json.NewEncoder(w).Encode(services.Message{
 			Message: "Method Not Allowed",
 		})
-	return
+		return
 	}
 
 	loginReq := services.LoginReq{}
 
-		// mengecek apakah body nya sudah sama dengan user request 
-		if err := json.NewDecoder(r.Body).Decode(&loginReq); err != nil {
-			w.WriteHeader(services.BadRequest)
-			json.NewEncoder(w).Encode(services.Message{
-				Message: "Invalid Field",
-			})
-			return
-		}
+	// mengecek apakah body nya sudah sama dengan user request
+	if err := json.NewDecoder(r.Body).Decode(&loginReq); err != nil {
+		w.WriteHeader(services.BadRequest)
+		json.NewEncoder(w).Encode(services.Message{
+			Message: "Invalid Field",
+		})
+		return
+	}
 
 	if err := services.Validation(loginReq); err != nil {
 		w.WriteHeader(services.BadRequest)
 		json.NewEncoder(w).Encode(services.Message{
 			Message: "Validation Error",
-			Error: err,
+			Error:   err,
 		})
 		return
 	}
 
-
 	ctx := context.Background()
-	login,err := grpcClient.LoginService.Login(ctx,&pb.ReqLogin{
-		Email: loginReq.Email,
+	login, err := grpcClient.LoginService.Login(ctx, &pb.ReqLogin{
+		Email:    loginReq.Email,
 		Password: loginReq.Password,
 	})
 
 	if err != nil {
-		log.Fatal(err.Error())
-		w.WriteHeader(services.InternalServerError)
+		w.WriteHeader(services.BadRequest)
 		json.NewEncoder(w).Encode(services.Message{
-			Message: "Failed Login",
+			Message: "Email Atau Password Salah",
 		})
 		return
 	}
 
+	// menyimpan jwt token dan refresh token di redis
+	configs.KeepToRedis(login.Token, login.Refresh)
+
 	w.WriteHeader(services.Success)
 	json.NewEncoder(w).Encode(services.Message{
-		Message: login.Message,
-		Data: login.Data,
-		Token: login.Token,
+		Message:      login.Message,
+		Token:        login.Token,
 		RefreshToken: login.Refresh,
 	})
 }

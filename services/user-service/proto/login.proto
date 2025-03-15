@@ -16,7 +16,6 @@ message ReqLogin {
 
 message ResLogin {
     string message = 1;
-    repeated string data = 2;
-    string token = 3; 
-    string refresh = 4;
+    string token = 2; 
+    string refresh = 3;
 }
