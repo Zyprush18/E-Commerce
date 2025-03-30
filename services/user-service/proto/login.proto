@@ -16,6 +16,7 @@ message ReqLogin {
 
 message ResLogin {
     string message = 1;
-    string token = 2; 
-    string refresh = 3;
+    map <string, string> data = 2;
+    string token = 3; 
+    string refresh = 4;
 }

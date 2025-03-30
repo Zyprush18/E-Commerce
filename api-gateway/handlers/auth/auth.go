@@ -3,12 +3,12 @@ package auth
 import (
 	"context"
 	"encoding/json"
-
-	// "log"
+	"log"
 	"net/http"
+	"strings"
 
 	"github.com/Zyprush18/E-Commerce/common"
-	"github.com/Zyprush18/E-Commerce/configs"
+	// "github.com/Zyprush18/E-Commerce/configs"
 	"github.com/Zyprush18/E-Commerce/services"
 	pb "github.com/Zyprush18/E-Commerce/services/user-service/proto"
 )
@@ -126,13 +126,58 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// menyimpan jwt token dan refresh token di redis
-	configs.KeepToRedis(login.Token, login.Refresh)
-
+	
 	w.WriteHeader(services.Success)
 	json.NewEncoder(w).Encode(services.Message{
-		Message:      login.Message,
+		Message: login.Message,
+		Data: login.Data,
 		Token:        login.Token,
 		RefreshToken: login.Refresh,
 	})
 }
+
+func Logout(w http.ResponseWriter, r *http.Request)  {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodGet {
+		w.WriteHeader(services.MethodNotAllowed)
+		json.NewEncoder(w).Encode(services.Message{
+			Message: "Method not allowed",
+		})
+		return
+	}
+
+		// Ambil path contoh: /logout/123
+		path := r.URL.Path
+		parts := strings.Split(path, "/")
+	
+		// Pastikan path memiliki ID di urutan ketiga
+		if len(parts) < 3 || parts[2] == "" {
+			log.Println("tidak ada id")
+			return
+		}
+	
+		userid := parts[2] // Ambil {id} dari URL
+		
+
+	ctx := context.Background()
+	logouts,err := grpcClient.LogoutService.Logout(ctx, &pb.LogoutRequest{
+		Id: userid,
+	})
+
+	if err != nil {
+		w.WriteHeader(services.BadRequest)
+		json.NewEncoder(w).Encode(services.Message{
+			Message: "User Tidak Di Temukan",
+			Error: err.Error(),
+		})
+		return
+	}
+
+	w.WriteHeader(services.Success)
+	json.NewEncoder(w).Encode(services.Message{
+		Message: logouts.Message,
+	})
+
+}
+
+

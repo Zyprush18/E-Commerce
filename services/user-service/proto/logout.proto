@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package logout;
+
+option go_package = "github.com/Zyprush18/E-Commerce";
+
+
+service LogoutService {
+  rpc Logout(LogoutRequest) returns (LogoutResponse); 
+}
+
+message LogoutRequest {
+  string id = 1;  
+}
+
+message LogoutResponse {
+  string message = 1;  
+}

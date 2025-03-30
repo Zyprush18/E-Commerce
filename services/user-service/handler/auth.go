@@ -2,8 +2,8 @@ package handler
 
 import (
 	"context"
-	// "strings"
 
+	"github.com/Zyprush18/E-Commerce/configs"
 	"github.com/Zyprush18/E-Commerce/services"
 	"github.com/Zyprush18/E-Commerce/services/user-service/models"
 	pb "github.com/Zyprush18/E-Commerce/services/user-service/proto"
@@ -20,6 +20,10 @@ type Login struct {
 	pb.UnimplementedLoginServiceServer
 }
 
+type Logout struct {
+	pb.UnimplementedLogoutServiceServer
+}
+
 func (s *Register) Register(ctx context.Context, req *pb.ReqRegister) (*pb.ResRegister, error) {
 	// hashing password
 	hashingpw, err := service.HashingPassword(req.Password)
@@ -27,7 +31,7 @@ func (s *Register) Register(ctx context.Context, req *pb.ReqRegister) (*pb.ResRe
 		return nil, err
 	}
 
-	register := &models.UserModel{
+	register := &models.Register{
 		Name:     req.Name,
 		Email:    req.Email,
 		Password: hashingpw,
@@ -46,7 +50,7 @@ func (s *Register) Register(ctx context.Context, req *pb.ReqRegister) (*pb.ResRe
 func (s *Login) Login(ctx context.Context, req *pb.ReqLogin) (*pb.ResLogin, error) {
 	user := &models.UserModel{}
 
-	if err := repository.DB.Table("users").Where("email=?", req.Email).Find(&user).Error; err != nil {
+	if err := repository.DB.Table("users").Where("email= ?", req.Email).Find(&user).Error; err != nil {
 		return nil, err
 	}
 
@@ -59,10 +63,33 @@ func (s *Login) Login(ctx context.Context, req *pb.ReqLogin) (*pb.ResLogin, erro
 		return nil, err
 	}
 
+	configs.KeepToRedis(user.Id, accesstoken,refreshtoken)
+	
+	userdata := map[string]string{
+		"id":    user.Id,
+		"name":  user.Name,
+		"email": user.Email,
+	}
+
+
 	return &pb.ResLogin{
 		Message: "Berhasil Login",
+		Data: userdata,
 		Token:   accesstoken,
 		Refresh: refreshtoken,
 	}, nil
 
+}
+
+func (s *Logout) Logout(ctx context.Context, req *pb.LogoutRequest) (*pb.LogoutResponse, error)  {
+	user_id := req.GetId()
+
+	pesan, err := configs.Logout(user_id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.LogoutResponse{
+		Message: pesan,
+	},nil
 }

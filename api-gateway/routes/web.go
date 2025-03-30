@@ -13,6 +13,7 @@ func Routes()  {
 
 	http.HandleFunc("/register", auth.Register)
 	http.HandleFunc("/login",auth.Login)
+	http.HandleFunc("/logout/{id}",auth.Logout)
 
 
 	log.Println("Api gateway running on port : 8080")

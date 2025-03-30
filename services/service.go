@@ -89,9 +89,9 @@ func GenerateToken(email,password string, role int) (string,string,error) {
 }
 
 
-// func DecryptToken()  {
+func DecryptToken()  {
 	
-// }
+}
 
 
 func Validation(valreq interface{}) []string {

@@ -12,6 +12,7 @@ import (
 type GRPCCLIENT struct {
 	RegisterService pb.RegisterServiceClient
 	LoginService pb.LoginServiceClient
+	LogoutService pb.LogoutServiceClient
 
 }
 
@@ -28,5 +29,6 @@ func NewGRPCCLIENT() *GRPCCLIENT {
 	return &GRPCCLIENT{
 		RegisterService: pb.NewRegisterServiceClient(conn),
 		LoginService: pb.NewLoginServiceClient(conn),
+		LogoutService: pb.NewLogoutServiceClient(conn),
 	}
 }
